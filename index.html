@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Branch Scheduler - Employee scheduling and management application" />
+    <meta name="theme-color" content="#4f46e5" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Branch Scheduler" />
+    <meta property="og:description" content="Employee scheduling and management application" />
+    <meta property="og:image" content="/og-image.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Branch Scheduler" />
+    <meta property="twitter:description" content="Employee scheduling and management application" />
+    <meta property="twitter:image" content="/og-image.png" />
+    
+    <title>Branch Scheduler</title>
+    
+    <!-- Preconnect to Firebase -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+    
+    <!-- Critical CSS for loading state -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #333;
+        overflow-x: hidden;
+      }
+      
+      #root {
+        min-height: 100vh;
+      }
+      
+      /* Loading spinner styles */
+      .loading-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+      }
+      
+      .loading-container.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      .loading-logo {
+        width: 64px;
+        height: 64px;
+        background: white;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      
+      .loading-logo svg {
+        width: 36px;
+        height: 36px;
+        color: #4f46e5;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+      
+      .loading-text {
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      
+      .loading-subtext {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        text-align: center;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Error state styles */
+      .error-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #fee2e2;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 20px;
+      }
+      
+      .error-container.show {
+        display: flex;
+      }
+      
+      .error-content {
+        background: white;
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 500px;
+      }
+      
+      .error-title {
+        color: #dc2626;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      
+      .error-message {
+        color: #374151;
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 24px;
+      }
+      
+      .error-button {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      
+      .error-button:hover {
+        background: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; background: #f3f4f6; color: #374151; font-family: sans-serif;">
+        <div>
+          <h1 style="font-size: 24px; margin-bottom: 16px;">JavaScript Required</h1>
+          <p style="font-size: 16px; line-height: 1.5;">
+            Branch Scheduler requires JavaScript to function properly.<br>
+            Please enable JavaScript in your browser and reload the page.
+          </p>
+        </div>
+      </div>
+    </noscript>
+    
+    <!-- Loading State -->
+    <div id="loading-screen" class="loading-container">
+      <div class="loading-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+          <line x1="16" x2="16" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="2" y2="6"/>
+          <line x1="3" x2="21" y1="10" y2="10"/>
+          <path d="M8 14h.01"/>
+          <path d="M12 14h.01"/>
+          <path d="M16 14h.01"/>
+          <path d="M8 18h.01"/>
+          <path d="M12 18h.01"/>
+          <path d="M16 18h.01"/>
+        </svg>
+      </div>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Branch Scheduler</div>
+      <div class="loading-subtext">Loading your schedule...</div>
+    </div>
+    
+    <!-- Error State -->
+    <div id="error-screen" class="error-container">
+      <div class="error-content">
+        <div class="error-title">Something went wrong</div>
+        <div class="error-message">
+          We're having trouble loading the application. Please check your internet connection and try again.
+        </div>
+        <button class="error-button" onclick="window.location.reload()">
+          Try Again
+        </button>
+      </div>
+    </div>
+    
+    <!-- React Root -->
+    <div id="root"></div>
+    
+    <!-- Application Scripts -->
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Error Handling -->
+    <script>
+      // Handle loading state
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.classList.add('hide');
+            setTimeout(function() {
+              loadingScreen.style.display = 'none';
+            }, 300);
+          }
+        }, 1000); // Minimum loading time for better UX
+      });
+      
+      // Handle global errors
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e);
+        showErrorScreen();
+      });
+      
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e);
+        if (e.reason && e.reason.message && e.reason.message.includes('Firebase')) {
+          showErrorScreen('We\'re having trouble connecting to our servers. Please check your internet connection and try again.');
+        }
+      });
+      
+      function showErrorScreen(message) {
+        const loadingScreen = document.getElementById('loading-screen');
+        const errorScreen = document.getElementById('error-screen');
+        
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+        
+        if (errorScreen) {
+          if (message) {
+            const errorMessage = errorScreen.querySelector('.error-message');
+            if (errorMessage) {
+              errorMessage.textContent = message;
+            }
+          }
+          errorScreen.classList.add('show');
+        }
+      }
+      
+      // Service Worker Registration (optional)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+      
+      // Performance monitoring
+      if ('PerformanceObserver' in window) {
+        try {
+          const observer = new PerformanceObserver(function(list) {
+            for (const entry of list.getEntries()) {
+              if (entry.entryType === 'navigation') {
+                console.log('Page load time:', entry.loadEventEnd - entry.loadEventStart, 'ms');
+              }
+            }
+          });
+          observer.observe({ entryTypes: ['navigation'] });
+        } catch (e) {
+          console.log('Performance monitoring not supported');
+        }
+      }
+    </script>
+  </body>
+</html>
